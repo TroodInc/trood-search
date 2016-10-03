@@ -1,5 +1,5 @@
 async def get_pipeline_report(date_from, date_to, request):
-    async with request['topline_db'].acquire() as conn:
+    async with request['db'].acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
                 SELECT DISTINCT ON (t.instance_id) t.status_id, t.assignee_id, t.created, s._price

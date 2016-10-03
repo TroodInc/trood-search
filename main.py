@@ -11,23 +11,20 @@ DSN = 'dbname={db_name} user={db_user} password={db_password} host={db_host} por
 
 async def db_middleware(app, handler):
     async def middleware(request):
-        if app.get('topline_db'):
-            request['topline_db'] = app['topline_db']
-        elif app.get('topline_dsn'):
-            app['topline_db'] = await aiopg.create_pool(app['topline_dsn'])
-            request['topline_db'] = app['topline_db']
+        project_name = request.match_info.route.name.split(':')[0]
+        if project_name == 'topline':
+            if not app.get('topline_db'):
+                app['topline_db'] = await aiopg.create_pool(app['topline_dsn'])
+            request['db'] = app['topline_db']
         return await handler(request)
     return middleware
 
 
 def start_app(port):
     app = web.Application(middlewares=[db_middleware])
-    try:
-        with open("config/topline.yaml", 'r') as stream:
-            topline_config = yaml.load(stream)
-            app['topline_dsn'] = DSN.format(**topline_config)
-    except FileNotFoundError:
-        pass
+    with open("config/topline.yaml", 'r') as stream:
+        topline_config = yaml.load(stream)
+        app['topline_dsn'] = DSN.format(**topline_config)
     setup_routes(app)
     web.run_app(app, port=port)
 
