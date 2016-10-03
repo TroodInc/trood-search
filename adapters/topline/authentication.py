@@ -6,7 +6,7 @@ async def is_authenticated(request):
         token = token_string.split()[1]
     except IndexError:
         return False
-    async with request['db'].acquire() as conn:
+    async with request['topline_db'].acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
                 SELECT user_id FROM authtoken_token
