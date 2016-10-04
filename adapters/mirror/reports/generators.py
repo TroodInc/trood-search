@@ -5,16 +5,11 @@ from adapters.mirror.reports.place_summary_report import build_place_report
 
 
 async def get_summary_report(project_id, request):
-    async with request['db'].acquire() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute("""
-                SELECT content FROM reports_report
-                WHERE project_id = %(project_id)s
-            """, {'project_id': project_id})
-            report_data = await cur.fetchall()
-            summary_report = []
-            for report in report_data:
-                summary_report.append(report[0])
+    cursor = request['cache'].mirror.summary_reports.find({'project_id': project_id})
+
+    summary_report = []
+    for report in (await cursor.to_list(length=100)):
+        summary_report.append(report['report'])
     return summary_report
 
 
@@ -46,7 +41,7 @@ async def generate_base_place_report(project_id, place_id, pool, cache):
                 }
             result = build_place_report(examinations_list, questionnaire_dict, place['title'], place_labels)
 
-    cache.reports.summary_reports.update(
+    cache.mirror.summary_reports.update(
         spec={
             'project_id': project_id,
             'place_id': place_id,
