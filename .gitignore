@@ -8,7 +8,7 @@ __pycache__/
 # C extensions
 *.so
 
-config/topline.yaml
+config/*.yaml
 
 .idea
 .DS_Store
