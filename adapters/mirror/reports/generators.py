@@ -5,13 +5,12 @@ from adapters.mirror.reports.place_summary_report import build_place_report
 
 
 async def get_summary_report(project_id, request):
-    cursor = request['cache'].reports.summary_reports.find({'project_id': project_id})
+    cursor = request['cache'].mirror.summary_reports.find({'project_id': project_id})
 
     summary_report = []
     while await cursor.fetch_next:
         report = cursor.next_object()
         summary_report.append(report['report'])
-    print(len(summary_report))
     return summary_report
 
 

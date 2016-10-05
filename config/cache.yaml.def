@@ -1,2 +1,2 @@
-cache_host:
-cache_port:
+cache_host: mongo.reporting
+cache_port: 27017

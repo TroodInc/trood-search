@@ -12,15 +12,16 @@ DSN = 'dbname={db_name} user={db_user} password={db_password} host={db_host} por
 
 async def db_middleware(app, handler):
     async def middleware(request):
-        project_name = request.match_info.route.name.split(':')[0]
-        if project_name == 'topline':
-            if not app.get('topline_db'):
-                app['topline_db'] = await aiopg.create_pool(app['topline_dsn'])
-            request['db'] = app['topline_db']
-        elif project_name == 'mirror':
-            if not app.get('mirror_db'):
-                app['mirror_db'] = await aiopg.create_pool(app['mirror_dsn'])
-            request['db'] = app['mirror_db']
+        if request.match_info.route.name:
+            project_name = request.match_info.route.name.split(':')[0]
+            if project_name == 'topline':
+                if not app.get('topline_db'):
+                    app['topline_db'] = await aiopg.create_pool(app['topline_dsn'])
+                request['db'] = app['topline_db']
+            elif project_name == 'mirror':
+                if not app.get('mirror_db'):
+                    app['mirror_db'] = await aiopg.create_pool(app['mirror_dsn'])
+                request['db'] = app['mirror_db']
         return await handler(request)
     return middleware
 

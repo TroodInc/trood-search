@@ -1,9 +1,21 @@
 version: "2"
 
 services:
+  server:
+    build: .
+    container_name: server.reporting
+    ports:
+      - "23801:80"
+    volumes:
+      - ./:/home/sites/reporting/
+    depends_on:
+      - mongo
+    networks:
+      - reporting-network
+
   mongo:
     image: mongo:3.3
-    container_name: mongo.test
+    container_name: mongo.reporting
     ports:
         - "27017:27017"
     networks:
