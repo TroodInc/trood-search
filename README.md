@@ -1,6 +1,6 @@
 ### To launch server 
 
-`python main.py --port <port>`
+docker-compose up -d
 
 ### Configs
 
