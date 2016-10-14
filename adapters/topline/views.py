@@ -2,6 +2,7 @@ from aiohttp import web
 
 from adapters.topline.authentication import ToplineAuthentication
 from adapters.topline.reports import generators
+from app.exceptions import ValidationError
 from app.serializers import DateRangeSerializer
 from app.views import LoginRequiredView
 
@@ -13,9 +14,8 @@ class PipelineView(LoginRequiredView):
         serializer = DateRangeSerializer(data=self.request.GET)
         try:
             serializer.is_valid()
-        except ValueError:
-            self.request['db'].close()
-            return web.json_response(status=400)
+        except ValidationError as e:
+            return web.json_response(e.message, status=400)
 
         date_from = serializer.validated_data.get('date_from')
         date_to = serializer.validated_data.get('date_to')
