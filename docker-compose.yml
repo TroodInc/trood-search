@@ -20,6 +20,8 @@ services:
         - "27017:27017"
     networks:
       - reporting-network
+    volumes:
+      - /usr/local/mongodb/docker:/data/db
 
 volumes:
   reporting-var:
