@@ -4,4 +4,4 @@ docker-compose up -d
 
 ### Configs
 
-Config for topline is required, template presented at config/topline.yaml.def
+All configs are required, templates presented at config/
