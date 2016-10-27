@@ -5,7 +5,7 @@ class EventSerializer(serializers.Serializer):
     fields = {
         'name': serializers.CharField(),
         'description': serializers.CharField(),
-        'documents': serializers.ListField(child_field_type=serializers.CharField()),
+        'documents': serializers.ListField(child_field=serializers.CharField()),
         'source': serializers.CharField(),
         'created': serializers.DatetimeField()
     }

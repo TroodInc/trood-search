@@ -19,6 +19,13 @@ class CharField(Field):
         return value
 
 
+class IntegerField(Field):
+    def validate(self, value):
+        if not isinstance(value, int):
+            raise ValidationError('value must be int')
+        return value
+
+
 class DateField(Field):
     def __init__(self, date_format='%Y-%m-%d', *args, **kwargs):
         self.format = date_format
@@ -46,30 +53,41 @@ class DatetimeField(Field):
 
 
 class ListField(Field):
-    def __init__(self, child_field_type, *args, **kwargs):
-        self.child_field_type = child_field_type
-        super(ListField).__init__(*args, **kwargs)
+    def __init__(self, child_field, *args, **kwargs):
+        assert isinstance(child_field, Field) or isinstance(child_field, Serializer), (
+            'List field should take Field or Serializer as child_field'
+        )
+        self.child_field = child_field
+        super(ListField, self).__init__(*args, **kwargs)
 
     def validate(self, value):
         if not isinstance(value, list):
             raise ValidationError('value must be list')
+        validated_data = []
         try:
             for instance in value:
-                self.child_field_type.validate(instance)
+                if isinstance(instance, Field):
+                    validated_data.append(self.child_field.validate(instance))
+                elif isinstance(instance, Serializer):
+                    validated_data.append(self.child_field.is_valid())
         except ValidationError as e:
-            message = '[{}]'.format(e.message)
+            message = [e.message, ]
             raise ValidationError(message)
-        return value
+        return validated_data
 
 
 class Serializer(object):
     required_fields = {}
     fields = {}
 
-    def __init__(self, data):
+    def __init__(self, data=None, many=False, required=True):
         self.is_validated = False
-        self.initial_data = data.copy()
+        self.many = many
+        self.initial_data = None
+        if data:
+            self.initial_data = data.copy()
         self._validated_data = {}
+        self.required = required
         self.required_fields = {attr for attr, field in self.fields.items() if field.required}
 
     @property
@@ -78,26 +96,60 @@ class Serializer(object):
         return self._validated_data
 
     def is_valid(self):
+        if not self.initial_data:
+            errors = {}
+            for field in self.required_fields:
+                errors[field] = 'this field is required'
+        elif self.many:
+            for obj in self.initial_data:
+                self._have_required_fields(obj)
+        else:
+            self._have_required_fields(self.initial_data)
+        errors = {}
+        if not self.many:
+            validated_data, errors = self._validated_data(self.initial_data)
+        else:
+            validated_data = []
+            for obj in self.initial_data:
+                validated_object, errors = self._validate_data(obj)
+                if errors:
+                    raise ValidationError([errors, ])
+                validated_data.append(validated_object)
+        if errors:
+            raise ValidationError(errors)
+        self.is_validated = True
+        self._validated_data = validated_data
+        return True
+
+    def _have_required_fields(self, data):
+        keys = data.keys()
+        if not set(self.required_fields).issubset(set(keys)):
+            errors = {}
+            for attr in self.required_fields:
+                if attr not in keys:
+                    errors[attr] = 'this field is required'
+            if self.many:
+                errors = [errors, ]
+            raise ValidationError(errors)
+
+    def _validate_data(self, data):
         errors = {}
         validated_data = {}
-        if not set(self.required_fields).issubset(set(self.initial_data.keys())):
-            message = '{} are required fields'.format(list(self.required_fields))
-            raise ValidationError(message)
         for attr, field in self.fields.items():
             try:
-                if self.initial_data.get(attr):
-                    validated_data[attr] = field.validate(self.initial_data[attr])
+                if isinstance(self.fields.get(attr), Field):
+                    validated_data[attr] = field.validate(data[attr])
+                elif isinstance(self.fields.get(attr), Serializer):
+                    field.initial_data = data.get(attr)
+                    field.is_valid()
+                    validated_data[attr] = field.validated_data
                 elif attr in self.required_fields:
                     raise ValidationError('this field is required')
                 else:
                     validated_data[attr] = None
             except ValidationError as e:
                 errors[attr] = e.message
-        if errors:
-            raise ValidationError(errors)
-        self.is_validated = True
-        self._validated_data = validated_data
-        return True
+        return validated_data, errors
 
 
 class DateRangeSerializer(Serializer):
@@ -105,5 +157,3 @@ class DateRangeSerializer(Serializer):
         'date_from': DateField(),
         'date_to': DateField()
     }
-
-
