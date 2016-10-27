@@ -100,6 +100,7 @@ class Serializer(object):
             errors = {}
             for field in self.required_fields:
                 errors[field] = 'this field is required'
+            raise ValidationError(errors)
         elif self.many:
             for obj in self.initial_data:
                 self._have_required_fields(obj)
