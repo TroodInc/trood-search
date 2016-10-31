@@ -29,11 +29,12 @@ class LoginRequiredView(BaseView):
 
     @asyncio.coroutine
     def __iter__(self):
-        authenticated = yield from self.authentication_class(self.request).authenticate()
-        if not authenticated:
-            return web.json_response({
-                'error': 'invalid credentials provided'
-            }, status=401)
+        if self.request.method.lower() == 'get':
+            authenticated = yield from self.authentication_class(self.request).authenticate()
+            if not authenticated:
+                return web.json_response({
+                    'error': 'invalid credentials provided'
+                }, status=401)
         response = yield from super(LoginRequiredView, self).__iter__()
         return response
 
@@ -49,4 +50,3 @@ class EventListView(web.View):
         date_to = serializer.validated_data.get('date_to')
         events = await get_events(date_from, date_to, self.request['cache'])
         return web.json_response(events)
-

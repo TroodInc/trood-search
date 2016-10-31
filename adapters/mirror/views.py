@@ -1,24 +1,19 @@
 from aiohttp import web
 
-from adapters.mirror.reports import generators
+from adapters.mirror.authentication import MirrorAuthentication
+from adapters.mirror.reports.manager import get_projects_for_manager, get_summary_reports, get_dynamic_reports
 from adapters.mirror.reports.serializers import DynamicReportSerializer, SummaryReportSerializer
-from app.views import LoginRequiredView, BaseView
+from app.views import LoginRequiredView
 
 
-class PlaceReportView(BaseView):
+class DynamicReportView(LoginRequiredView):
+    authentication_class = MirrorAuthentication
+
     async def get(self):
-        project_id = self.request.GET.get('project_id')
-        place_id = self.request.GET.get('place_id')
-        report = await generators.generate_base_place_report(
-            project_id=project_id,
-            place_id=place_id,
-            pool=self.request['db'],
-            cache=self.request['cache']
-        )
-        return web.json_response(report)
+        project_id_list = await get_projects_for_manager(self.request['user_id'], self.request['db'])
+        reports = await get_dynamic_reports(project_id_list, self.request)
+        return web.json_response(reports, status=200)
 
-
-class DynamicReportView(BaseView):
     async def post(self):
         data = await self.request.json()
         serializer = DynamicReportSerializer(data, many=True)
@@ -27,7 +22,14 @@ class DynamicReportView(BaseView):
         return web.json_response(status=200)
 
 
-class SummaryReportView(BaseView):
+class SummaryReportView(LoginRequiredView):
+    authentication_class = MirrorAuthentication
+
+    async def get(self):
+        project_id_list = await get_projects_for_manager(self.request['user_id'], self.request['db'])
+        reports = await get_summary_reports(project_id_list, self.request)
+        return web.json_response(reports, status=200)
+
     async def post(self):
         data = await self.request.json()
         serializer = SummaryReportSerializer(data, many=True)

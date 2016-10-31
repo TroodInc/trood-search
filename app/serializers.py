@@ -86,6 +86,8 @@ class Serializer(object):
         self.initial_data = None
         if data:
             self.initial_data = data.copy()
+        elif self.many:
+            self.initial_data = []
         self._validated_data = {}
         self.required = required
         self.required_fields = {attr for attr, field in self.fields.items() if field.required}
@@ -96,7 +98,7 @@ class Serializer(object):
         return self._validated_data
 
     def is_valid(self):
-        if not self.initial_data:
+        if self.initial_data is None:
             errors = {}
             for field in self.required_fields:
                 errors[field] = 'this field is required'

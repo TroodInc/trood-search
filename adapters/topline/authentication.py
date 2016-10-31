@@ -18,6 +18,7 @@ class ToplineAuthentication(BaseAuthentication):
                 """, {'token': token})
                 row = await cur.fetchone()
                 if row:
+                    self.request['user_id'] = row[0]
                     return True
                 else:
                     return False
