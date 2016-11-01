@@ -3,3 +3,4 @@ aiopg==0.11.0
 PyYAML==3.12
 motor==0.6.2
 python-dateutil==2.5.3
+pytest==3.0.3
