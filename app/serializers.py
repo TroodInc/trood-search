@@ -110,7 +110,7 @@ class Serializer(object):
             self._have_required_fields(self.initial_data)
         errors = {}
         if not self.many:
-            validated_data, errors = self._validated_data(self.initial_data)
+            validated_data, errors = self._validate_data(self.initial_data)
         else:
             validated_data = []
             for obj in self.initial_data:
