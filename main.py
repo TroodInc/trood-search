@@ -33,13 +33,21 @@ async def cache_middleware(app, handler):
     return middleware
 
 
+async def app_middleware(app, handler):
+    async def middleware(request):
+        request['app'] = app
+        return await handler(request)
+    return middleware
+
+
 def start_app(port):
-    app = web.Application(middlewares=[db_middleware, cache_middleware])
+    app = web.Application(middlewares=[db_middleware, cache_middleware, app_middleware])
     with open("config/topline.yaml", 'r') as stream:
         topline_config = yaml.load(stream)
         app['topline_dsn'] = DSN.format(**topline_config)
     with open("config/mirror.yaml", 'r') as stream:
         mirror_config = yaml.load(stream)
+        app['mirror_host'] = mirror_config.get('server_host')
         app['mirror_dsn'] = DSN.format(**mirror_config)
     with open("config/cache.yaml", 'r') as stream:
         cache_config = yaml.load(stream)
