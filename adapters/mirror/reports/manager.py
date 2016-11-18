@@ -32,3 +32,4 @@ async def get_projects_for_manager(manager_id, pool):
             projects = await cur.fetchall()
             projects_id_list = [project[0] for project in projects]
     return projects_id_list
+

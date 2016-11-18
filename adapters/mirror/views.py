@@ -1,3 +1,4 @@
+import aiohttp
 from aiohttp import web
 
 from adapters.mirror.authentication import MirrorAuthentication
@@ -6,13 +7,22 @@ from adapters.mirror.reports.serializers import DynamicReportSerializer, Summary
 from app.views import LoginRequiredView
 
 
-class DynamicReportView(LoginRequiredView):
+class MirrorProxyView(LoginRequiredView):
     authentication_class = MirrorAuthentication
+    method_uri = None
 
     async def get(self):
-        project_id_list = await get_projects_for_manager(self.request['user_id'], self.request['db'])
-        reports = await get_dynamic_reports(project_id_list, self.request)
-        return web.json_response(reports, status=200)
+        host = self.request['app']['mirror_host']
+        headers = {'Authorization': self.request.headers.get('Authorization')}
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url=host + self.method_uri, headers=headers) as response:
+                data = await response.json()
+        return web.json_response(data)
+
+
+class DynamicReportView(MirrorProxyView):
+    authentication_class = MirrorAuthentication
+    method_uri = '/r/CLIENT_MANAGER/reports/chanels/data/dynamic/'
 
     async def post(self):
         data = await self.request.json()
@@ -22,13 +32,8 @@ class DynamicReportView(LoginRequiredView):
         return web.json_response(status=200)
 
 
-class SummaryReportView(LoginRequiredView):
-    authentication_class = MirrorAuthentication
-
-    async def get(self):
-        project_id_list = await get_projects_for_manager(self.request['user_id'], self.request['db'])
-        reports = await get_summary_reports(project_id_list, self.request)
-        return web.json_response(reports, status=200)
+class SummaryReportView(MirrorProxyView):
+    method_uri = '/r/CLIENT_MANAGER/reports/chanels/data/summary/'
 
     async def post(self):
         data = await self.request.json()
@@ -36,4 +41,12 @@ class SummaryReportView(LoginRequiredView):
         serializer.is_valid()
         await serializer.save(self.request['cache'])
         return web.json_response(status=200)
+
+
+class MirrorEventsView(MirrorProxyView):
+    method_uri = '/r/CLIENT_MANAGER/reports/events/data/'
+
+
+class MirrorRegularitiesView(MirrorProxyView):
+    method_uri = '/r/CLIENT_MANAGER/reports/regularities/data/'
 
