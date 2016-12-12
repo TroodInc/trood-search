@@ -1,10 +1,13 @@
 import asyncio
 import collections
+
+import simplejson
 from aiohttp import web
 
 from app.events.manager import get_events
 from app.exceptions import ValidationError, APIException
 from app.serializers import DateRangeSerializer
+from app.reports.serializers import BarChartSerializer, LineChartSerializer
 
 
 class BaseView(web.View):
@@ -50,3 +53,20 @@ class EventListView(web.View):
         date_to = serializer.validated_data.get('date_to')
         events = await get_events(date_from, date_to, self.request['cache'])
         return web.json_response(events)
+
+
+class ReportView(BaseView):
+    serializers = {
+        'BAR': BarChartSerializer,
+        'LINE': LineChartSerializer,
+    }
+
+    async def post(self):
+        params = await self.request.json()
+        serializer_class = self.serializers.get(params.get('type'))
+        if not serializer_class:
+            raise ValidationError('wrong chart type')
+        serializer = serializer_class(params)
+        serializer.is_valid()
+        await serializer.save(self.request['cache'])
+        return web.json_response(serializer.validated_data)
