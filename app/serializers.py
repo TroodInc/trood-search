@@ -1,12 +1,16 @@
 import datetime
 
 from dateutil import parser
+from decimal import Decimal, InvalidOperation
+
 from app.exceptions import ValidationError
 
 
 class Field(object):
-    def __init__(self, required=True):
+    def __init__(self, required=True, read_only=False):
+        assert not (required and read_only), 'You can\'t set required_field to read_only'
         self.required = required
+        self.read_only = read_only
 
     def validate(self, value):
         raise NotImplementedError
@@ -19,11 +23,32 @@ class CharField(Field):
         return value
 
 
+class ChoiceField(CharField):
+    def __init__(self, choice, *args, **kwargs):
+        super(ChoiceField, self).__init__(*args, **kwargs)
+        self._available_values = set(choice)
+
+    def validate(self, value):
+        super(ChoiceField, self).validate(value)
+        if value not in self._available_values:
+            raise ValidationError('value must be one of following: {}'.format(list(self._available_values)))
+        return value
+
+
 class IntegerField(Field):
     def validate(self, value):
         if not isinstance(value, int):
             raise ValidationError('value must be int')
         return value
+
+
+class DecimalField(Field):
+    def validate(self, value):
+        try:
+            validated_value = Decimal(value)
+        except (InvalidOperation, TypeError):
+            raise ValidationError('value must be int or float')
+        return str(validated_value)
 
 
 class DateField(Field):
@@ -80,10 +105,11 @@ class Serializer(object):
     required_fields = {}
     fields = {}
 
-    def __init__(self, data=None, many=False, required=True):
+    def __init__(self, data=None, many=False, required=True, read_only=False):
         self.is_validated = False
         self.many = many
         self.initial_data = None
+        self.read_only = read_only
         if data:
             self.initial_data = data.copy()
         elif self.many:
@@ -138,11 +164,12 @@ class Serializer(object):
     def _validate_data(self, data):
         errors = {}
         validated_data = {}
-        for attr, field in self.fields.items():
+        fields = {attr: field for attr, field in self.fields.items() if not field.read_only}
+        for attr, field in fields.items():
             try:
-                if isinstance(self.fields.get(attr), Field):
+                if isinstance(self.fields.get(attr), Field) and data.get(attr):
                     validated_data[attr] = field.validate(data[attr])
-                elif isinstance(self.fields.get(attr), Serializer):
+                elif isinstance(self.fields.get(attr), Serializer) and data.get(attr):
                     field.initial_data = data.get(attr)
                     field.is_valid()
                     validated_data[attr] = field.validated_data
