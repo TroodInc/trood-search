@@ -1,0 +1,20 @@
+version: "2.1"
+
+services:
+  docs:
+    restart: always
+    image: registry.tools.trood.ru/docs.tcp:${TAG:-latest}
+    build: .
+    container_name: docs.tcp
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      LETSENCRYPT_HOST: ${VIRTUAL_HOST}
+      LETSENCRYPT_EMAIL: ${LE_EMAIL}
+    expose:
+      - "80"
+    networks:
+      - proxy_net
+ 
+networks:
+  proxy_net:
+    external: true
