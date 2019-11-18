@@ -12,6 +12,7 @@ uvloop = "*"
 sentry-sdk = "==0.7.9"
 Sphinx = "*"
 aiohttp-swagger = "*"
+aiomysql = "*"
 
 [dev-packages]
 isort = "*"

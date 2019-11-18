@@ -8,7 +8,7 @@ import uvloop
 
 from aiohttp import web
 
-from search import routes, settings
+from search import routes, settings, db
 from search.aio_trood_sdk.auth_http import trood_auth
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -28,6 +28,7 @@ def init(args):
     app = web.Application(middlewares=[trood_auth])
     app['settings'] = app_settings
     routes.setup(app)
+    db.setup(app)
     return app
 
 
@@ -40,6 +41,9 @@ def main(argv):
     loop = asyncio.get_event_loop()
 
     app = init(argv)
+
+    app.on_startup.append(app['db'].connect)
+    app.on_cleanup.append(app['db'].shutdown)
     
     try:
         web.run_app(app, host=app['settings'].HOST, port=app['settings'].PORT)

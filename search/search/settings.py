@@ -13,6 +13,7 @@ def setup():
         SECRET_KEY=(str, '548ab8296ff44d2f954c17d850833af1'),
 
         SPHINX_URL=(str, 'http://sphinxsearch:9307/'),
+        SPHINX_DSN=(str, 'mysql://sphinxsearch:9306/'),
         SEARCH_INDEXES=(str, ''),
 
         AUTH_URL=(str, 'http://auth:8000/'),

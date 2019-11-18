@@ -19,6 +19,7 @@ async def search(request):
 
 
 def get_search_data(query, settings):
+    protocol = query.get('protocol', 'http')
     indexes = query.getall('index', [])
     if not indexes:
         indexes = settings.SEARCH_INDEXES.split(',')
@@ -36,6 +37,7 @@ def get_search_data(query, settings):
         limit = '0,10'
     
     data = {
+        'protocol': protocol,
         'indexes': indexes,
         'match': match,
         'select': select,
@@ -61,7 +63,17 @@ async def sphinxsearch(host, query):
     # url = f'{host}search/'
     # data = '&'.join(f'{k}={v}' for k,v in query.items())
     url = f'{host}sql/'
+    protocol = query.pop('protoccol')
     data = f'query={make_sql(query)}'
+    if protocol == 'http':
+        results = http(host, data)
+    else:
+        results = mysql(data)
+
+    return results
+
+
+def http(host, data):
     async with ClientSession() as session:
         response = await session.post(url, data=data)
         if response.status == 200:
@@ -72,6 +84,10 @@ async def sphinxsearch(host, query):
             results = {'searchengine': 'error'}
 
     return results
+
+
+def mysql(data):
+    pass
 
 
 def make_sql(query):
