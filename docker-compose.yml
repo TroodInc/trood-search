@@ -1,31 +1,65 @@
-version: "2"
+version: "3"
 
 services:
-  server:
-    build: .
-    container_name: server.reporting
-    ports:
-      - "23801:80"
+
+  search:
+    image: registry.tools.trood.ru/search:dev
+    build:
+      context: ./search
+      dockerfile: Dockerfile
+    container_name: search
+    restart: always
+    environment:
+      DEBUG: "False"
+      HOST: "0.0.0.0"
+      PORT: 8080
+      SECRET_KEY: "548ab8296ff44d2f954c17d850833af1"
+      SPHINX_URL: "http://sphinxsearch:9307/"
+      AUTH_URL: "http://auth.trood.com/"
+      AUTH_DOMAIN: "SEARCH"
+      AUTH_SECRET: "b1b4a229c0cb5865f67f0626dc9c184526dc6dd99f8f505b14d1c95739d523dfcfaa17534ea160364fe27e10e6c331a1c231f60be581e69fed4f5bf9c4dfdadb"
+      SENTRY_ENABLED: "False"
+      SENTRY_DSN: "https://42d08b480e6c4171a19c5c61cea98c0f:4bfb7897b15a4df4b31133bd02d8aff3@sentry.tools.trood.ru/5"
     volumes:
-      - ./:/home/sites/reporting/
+      - ./search:/app
+    networks:
+      - search_net
+    ports:
+      - "8030:8080"
+
+  postgres:
+    image: postgres:10.5
+    container_name: postgres
+    restart: always
+    environment:
+      LC_ALL: C.UTF-8
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - search_net
+  
+  sphinxsearch:
+    image: registry.tools.trood.ru/sphinxsearch:dev
+    build:
+      context: ./sphinxsearch
+      dockerfile: Dockerfile
+    container_name: sphinxsearch
+    restart: always
     depends_on:
-      - mongo
-    networks:
-      - reporting-network
-
-  mongo:
-    image: mongo:3.3
-    container_name: mongo.reporting
-    ports:
-        - "27017:27017"
-    networks:
-      - reporting-network
+      - postgres
     volumes:
-      - /usr/local/mongodb/docker:/data/db
-
-volumes:
-  reporting-var:
+      - ./sphinxsearch/sphinx.conf:/etc/sphinxsearch/sphinx.conf
+      - ./sphinxsearch/data:/var/lib/sphinxsearch/data
+    networks:
+      - search_net
+    ports:
+      - "9307:9307"
 
 networks:
-  reporting-network:
+  search_net:
     driver: bridge

@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+aiohttp = "*"
+envparse = "*"
+pytest = "*"
+pytest-aiohttp = "*"
+uvloop = "*"
+sentry-sdk = "==0.7.9"
+Sphinx = "*"
+aiohttp-swagger = "*"
+
+[dev-packages]
+isort = "*"
+pylint = "*"
+"flake8" = "*"
