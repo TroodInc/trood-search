@@ -10,6 +10,7 @@ class Engine:
     def __init__(self, index):
         self.database = database
         self.indexes = index.split(",")
+        self.meta_query = 'SHOW META'
 
     async def search(self, select, match, limit):
         indexes = (
@@ -20,7 +21,14 @@ class Engine:
 
     async def search_index(self, index, select, match, limit):
         query = f"select {select} from {index} where match('{match}') limit {limit}"
-        return await self.database.fetch_all(query=query)
+        result = await self.database.fetch_all(query=query)
+        meta = await self.database.fetch_all(query=self.meta_query)
+        meta = dict(meta)
+        result = {
+            'meta': meta,
+            'result': result
+        }
+        return result
 
     async def create(self, query):
         query = self.make_touch_query("INSERT", query)

@@ -16,10 +16,11 @@ def test_search(client):
 def test_index(client, headers):
     # TODO: Rollback test data
     # Clean index from previous test results.
-    # for i in (4, 22, 12):
+    # for i in (58, 74, 40, 97):
     #     response = client.post(
     #         "/index/",
-    #         json={ "object": "rt_test_text", "action": "delete", "previous": {"id": i}, "current": {}},
+    #         headers=headers,
+    #         json={ "object": "test_text", "action": "delete", "previous": {"id": i}, "current": {}},
     #     )
     id = random.randint(0, 100)
     response = client.post("/index/", headers=headers)
@@ -47,7 +48,7 @@ def test_index(client, headers):
         "/search/?index=rt_test_text_index&match=four", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()) == 1
+    assert len(response.json()['result']) == 1
 
     # Check is index updated
     response = client.post(
@@ -64,19 +65,19 @@ def test_index(client, headers):
 
     response = client.get("/search/?index=rt_test_text_index", headers=headers)
     assert response.status_code == 200, response.json()
-    assert len(response.json()) == 1
+    assert len(response.json()['result']) == 1
 
     response = client.get(
         "/search/?index=rt_test_text_index&match=five", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()) == 1
+    assert len(response.json()['result']) == 1
 
     response = client.get(
         "/search/?index=rt_test_text_index&match=four", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()) == 0
+    assert len(response.json()['result']) == 0
 
     # Check is index deleted
     response = client.post(
@@ -95,14 +96,14 @@ def test_index(client, headers):
         "/search/?index=rt_test_text_index&match=five", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()) == 0
+    assert len(response.json()['result']) == 0
 
     response = client.get(
         "/search/?index=rt_test_text_index&match=four", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()) == 0
+    assert len(response.json()['result']) == 0
 
     response = client.get("/search/?index=rt_test_text_index", headers=headers)
     assert response.status_code == 200, response.json()
-    assert len(response.json()) == 0
+    assert len(response.json()['result']) == 0
