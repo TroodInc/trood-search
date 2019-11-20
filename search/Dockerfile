@@ -4,6 +4,7 @@ RUN mkdir -p /app
 WORKDIR /app
 COPY . /app/
 
-RUN pip install --upgrade pip pipenv && pipenv install
+RUN pip install --upgrade pip pipenv && \
+    pipenv install
 
-CMD ["sh", "docker-entrypoint.sh"]
+CMD ["pipenv", "run", "uvicorn", "--host=0.0.0.0", "search.main:app"]
