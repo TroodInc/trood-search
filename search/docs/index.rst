@@ -3,10 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Search service
-==============
+=======
+Full-text search service
+========================
 
-Give fulltext search interface to user.
+Give full-text search interface to user.
 
 Contents
 --------
