@@ -1,10 +1,8 @@
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.exceptions import RequestValidationError
-from starlette.responses import JSONResponse
+from fastapi import FastAPI
 
 from .database import database
+from .middlewares import SearchErrorMiddleware
 from .views import router
-
 
 app = FastAPI(
     title="TROOD search API",
@@ -12,6 +10,10 @@ app = FastAPI(
     docs_url="/docs/",
     redoc_url=None,
     version="1.1.1",
+)
+
+app.error_middleware = SearchErrorMiddleware(
+    app.exception_middleware, debug=app._debug
 )
 
 

@@ -15,6 +15,7 @@ from fastapi.openapi.models import APIKey, APIKeyIn
 from fastapi.security import APIKeyHeader
 from starlette.requests import Request
 
+
 def get_service_token(domain, secret):
     key = hashlib.sha1(b"trood.signer" + secret.encode("utf-8")).digest()
     signature = hmac.new(
@@ -28,11 +29,15 @@ async def check_token(token):
     if not token:
         return None
 
-    url = f"{os.environ.get('host', 'http://auth:8000')}/api/v1.0/verify-token"
+    url = f"{os.environ.get('AUTH_URL', 'http://auth:8000')}/api/v1.0/verify-token"
     headers = {
         "Content-Type": "application/json",
         "Authorization": get_service_token(
-            os.environ.get("DOMAIN"), os.environ.get("SECRET")
+            os.environ.get("AUTH_DOMAIN", "SEARCH"),
+            os.environ.get(
+                "AUTH_SECRET",
+                "b1b4a229c0cb5865f67f0626dc9c184526dc6dd99f8f505b14d1c95739d523dfcfaa17534ea160364fe27e10e6c331a1c231f60be581e69fed4f5bf9c4dfdadb",
+            ),
         ),
     }
 

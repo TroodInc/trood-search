@@ -12,4 +12,7 @@ test:
 black:
 	@pipenv run black -l 79 .
 
+isort:
+	@pipenv run isort ${file}
+
 .PHONY: default run test

@@ -48,7 +48,7 @@ def test_index(client, headers):
         "/search/?index=rt_test_text_index&match=four", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()['result']) == 1
+    assert len(response.json()["result"]) == 1
 
     # Check is index updated
     response = client.post(
@@ -65,19 +65,19 @@ def test_index(client, headers):
 
     response = client.get("/search/?index=rt_test_text_index", headers=headers)
     assert response.status_code == 200, response.json()
-    assert len(response.json()['result']) == 1
+    assert len(response.json()["result"]) == 1
 
     response = client.get(
         "/search/?index=rt_test_text_index&match=five", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()['result']) == 1
+    assert len(response.json()["result"]) == 1
 
     response = client.get(
         "/search/?index=rt_test_text_index&match=four", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()['result']) == 0
+    assert len(response.json()["result"]) == 0
 
     # Check is index deleted
     response = client.post(
@@ -96,14 +96,14 @@ def test_index(client, headers):
         "/search/?index=rt_test_text_index&match=five", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()['result']) == 0
+    assert len(response.json()["result"]) == 0
 
     response = client.get(
         "/search/?index=rt_test_text_index&match=four", headers=headers
     )
     assert response.status_code == 200, response.json()
-    assert len(response.json()['result']) == 0
+    assert len(response.json()["result"]) == 0
 
     response = client.get("/search/?index=rt_test_text_index", headers=headers)
     assert response.status_code == 200, response.json()
-    assert len(response.json()['result']) == 0
+    assert len(response.json()["result"]) == 0

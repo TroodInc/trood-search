@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 envparse = "*"
 pytest = "*"
-sentry-sdk = "==0.7.9"
+sentry-sdk = "*"
 fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
