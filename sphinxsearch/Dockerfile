@@ -1,7 +1,10 @@
 FROM ubuntu:16.04 as sphinx
 
+ADD crontab /etc/cron.d/sphinx_cron
+
 RUN apt-get update && \
     apt-get -y install wget gcc g++ make libpq-dev libpqxx-dev postgresql && \
+    apt-get -y install cron && \
     mkdir -p /var/log/sphinxsearch && \
     mkdir -p /var/run/sphinxsearch && \
     mkdir -p /var/lib/sphinxsearch/data && \
@@ -12,7 +15,9 @@ RUN apt-get update && \
     ln -sf /dev/stderr /var/log/sphinxsearch/query.log && \
     wget https://github.com/sphinxsearch/sphinx/archive/2.3.2-beta.tar.gz && \
     tar xzvf /2.3.2-beta.tar.gz && \
-    rm /2.3.2-beta.tar.gz
+    rm /2.3.2-beta.tar.gz && \
+    chmod 0644 /etc/cron.d/sphinx_cron && \
+    touch /var/log/cron.log
 
 WORKDIR /sphinx-2.3.2-beta
 
