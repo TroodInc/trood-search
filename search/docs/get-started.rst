@@ -12,8 +12,3 @@ Description
 
 
 Search service contains REST API and `Sphinx search engine <http://sphinxsearch.com/>`_.
-
-Install
--------
-
-

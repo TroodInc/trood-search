@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-=======
+
 Full-text search service
 ========================
 
@@ -16,3 +16,9 @@ Contents
     get-started
     settings
     rest-api
+    querying
+
+Versioning
+----------
+
+Use `Semantic Versioning <https://semver.org/>`_
