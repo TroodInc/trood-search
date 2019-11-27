@@ -56,21 +56,6 @@ services:
       - "5432:5432"
     networks:
       - search_net
-  
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4:latest
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@trood.com
-      PGADMIN_DEFAULT_PASSWORD: tcp.trood.com
-    volumes:
-      - ./pgadmin:/var/lib/pgadmin
-      - ./pgadmin/servers.json:/servers.json
-    ports:
-      - "5455:80"
-    networks:
-      - search_net
 
 networks:
   search_net:

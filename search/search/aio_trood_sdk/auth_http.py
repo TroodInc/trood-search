@@ -34,10 +34,7 @@ async def check_token(token):
         "Content-Type": "application/json",
         "Authorization": get_service_token(
             os.environ.get("AUTH_DOMAIN", "SEARCH"),
-            os.environ.get(
-                "AUTH_SECRET",
-                "b1b4a229c0cb5865f67f0626dc9c184526dc6dd99f8f505b14d1c95739d523dfcfaa17534ea160364fe27e10e6c331a1c231f60be581e69fed4f5bf9c4dfdadb",
-            ),
+            os.environ.get("AUTH_SECRET", "AUTH_SECRET",),
         ),
     }
 
