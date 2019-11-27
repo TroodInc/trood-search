@@ -3,7 +3,7 @@ version: "3"
 services:
 
   search:
-    image: registry.tools.trood.ru/search:dev
+    image: registry.tools.trood.ru/search:${TAG_NAME:-dev}
     build:
       context: ./search
       dockerfile: Dockerfile
@@ -44,7 +44,7 @@ services:
       - search_net
   
   sphinxsearch:
-    image: registry.tools.trood.ru/sphinxsearch:dev
+    image: registry.tools.trood.ru/sphinxsearch:${TAG_NAME:-dev}
     build:
       context: ./sphinxsearch
       dockerfile: Dockerfile
