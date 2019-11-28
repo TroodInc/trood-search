@@ -19,12 +19,20 @@ app.error_middleware = SearchErrorMiddleware(
 
 @app.on_event("startup")
 async def startup():
-    await database.connect()
+    try:
+        await database.connect()
+    except Exception:
+        # TODO: Remove. For backward compatibility with legacy settings now.
+        pass
 
 
 @app.on_event("shutdown")
 async def shutdown():
-    await database.disconnect()
+    try:
+        await database.disconnect()
+    except Exception:
+        # TODO: Remove. For backward compatibility with legacy settings now.
+        pass
 
 
 app.include_router(router)
