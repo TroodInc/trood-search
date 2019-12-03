@@ -1,14 +1,14 @@
-import pytest
 from typing import Optional
 from urllib.parse import urlparse
-from starlette.testclient import TestClient
-from fastapi import HTTPException, Depends
-from starlette.requests import Request
 
-from .database import database
+import pytest
+from fastapi import Depends, HTTPException
+from starlette.requests import Request
+from starlette.testclient import TestClient
+
+from .aio_trood_sdk.auth_http import TrooAuthHeader
 from .main import app
 from .views import token_parameter
-from .aio_trood_sdk.auth_http import TrooAuthHeader
 
 
 class MockAuthHeader(TrooAuthHeader):

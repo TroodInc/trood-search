@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 class Engine(BaseEngine):
     """ Sphinx search engine interface. """
 
-    def __init__(self, index):
+    def __init__(self, index, app):
+        self.app = app
         self.database = database
         self.indexes = index.split(",")
         self.meta_query = "SHOW META"
@@ -42,18 +43,16 @@ class Engine(BaseEngine):
         return await database.execute(query=query)
 
     async def _search_index(self, index, select, match, limit):
-        query = f"select {select} from {index} where match('{match}') limit {limit}"
-        try:
-            results = await self.database.fetch_all(query=query)
-            meta = await self.database.fetch_all(query=self.meta_query)
-            meta = dict(meta)
-            attrs, matches = await self._split_on_attrs_and_matches(results)
-            result = {"meta": meta, "attrs": attrs, "matches": matches}
-            # result = {"meta": meta, "results": results}
-        except AssertionError:
-            # TODO Remove. For backward compatibility with legacy settings now.
-            result = await self._http_search(query)
+        snippet = self.app.snippets.get(index, "")
+        if snippet != "":
+            snippet = snippet.format(match=match)
 
+        query = f"select {select}{snippet} from {index} where match('{match}') limit {limit}"
+        results = await self.database.fetch_all(query=query)
+        meta = await self.database.fetch_all(query=self.meta_query)
+        meta = dict(meta)
+        attrs, matches = await self._split_on_attrs_and_matches(results)
+        result = {"meta": meta, "attrs": attrs, "matches": matches}
         return result
 
     async def _split_on_attrs_and_matches(self, results):
@@ -64,27 +63,12 @@ class Engine(BaseEngine):
                 attrs = result.keys()
 
             match = []
-            for key in attrs:
+            for key in attrs[:]:
                 match.append(result[key])
 
             matches.append(match)
 
         return attrs, matches
-
-    async def _http_search(self, query):
-        # TODO: Remove. For backward compatibility with legacy settings now.
-        url = f"http://127.0.0.1:9307/sql/"
-        query = f"query={query}"
-        async with ClientSession() as session:
-            response = await session.post(url, data=query)
-            if response.status == 200:
-                results = await response.json()
-            else:
-                response = await response.text()
-                logger.warn(response)
-                results = {"searchengine": "error"}
-
-        return results
 
     def _generate_touch_query(self, name, query):
         """ Generate INSERT, REPLACE query. """

@@ -22,8 +22,4 @@ class SearchErrorMiddleware(ServerErrorMiddleware):
                 )
                 sentry_sdk.capture_exception(exc)
 
-            if exc.__str__() == "DatabaseBackend is not running":
-                # TODO: Remove. For backward compatibility with legacy settings now.
-                return
-
             raise exc from None

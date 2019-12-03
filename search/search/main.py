@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from .database import database
+from . import database, snippets
 from .middlewares import SearchErrorMiddleware
 from .views import router
 
@@ -19,20 +19,13 @@ app.error_middleware = SearchErrorMiddleware(
 
 @app.on_event("startup")
 async def startup():
-    try:
-        await database.connect()
-    except Exception:
-        # TODO: Remove. For backward compatibility with legacy settings now.
-        pass
+    await database.startup(app)
+    snippets.setup(app)
 
 
 @app.on_event("shutdown")
 async def shutdown():
-    try:
-        await database.disconnect()
-    except Exception:
-        # TODO: Remove. For backward compatibility with legacy settings now.
-        pass
+    await database.shutdown(app)
 
 
 app.include_router(router)
