@@ -4,6 +4,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+sphinxsearch/data
+search/docs/_build
+.vscode
+local.docker-compose.yml
 
 # C extensions
 *.so
