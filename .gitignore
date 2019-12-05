@@ -8,6 +8,8 @@ sphinxsearch/data
 search/docs/_build
 .vscode
 local.docker-compose.yml
+postgres
+pgadmin
 
 # C extensions
 *.so

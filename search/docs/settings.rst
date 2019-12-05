@@ -1,6 +1,9 @@
 Settings
 ========
 
+REST API
+--------
+
 To setup application your can use environment variables or .env file.
 
 You can setup next given variables:
@@ -49,3 +52,17 @@ You can setup next given variables:
 
     Default: https://42d08b480e6c4171a19c5c61cea98c0f:4bfb7897b15a4df4b31133bd02d8aff3@sentry.tools.trood.ru/5
 
+Index
+-----
+
+Main
+____
+
+.. include:: ./_static/example_main_sphinx.conf
+  :literal:
+
+Real time
+_________
+
+.. include:: ./_static/example_rt_sphinx.conf
+  :literal:

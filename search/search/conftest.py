@@ -47,3 +47,13 @@ def client():
     app.dependency_overrides[token_parameter] = override_token_parameter
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def big_text():
+    text = """
+        This article covers the system architecture of the Trood Core platform and intended to provide a general understanding of how Trood-based software is being developed and supported.
+        The material is designed for system engineers with an advanced technology background, though using the links provided and other TCP materials any interested researcher can make his way to a full understanding of the key concepts.
+        The architecture of Trood Core is designed to fully comply with Trood Key Concepts. We won’t repeat the information here and just dive into technical details.
+    """
+    yield text

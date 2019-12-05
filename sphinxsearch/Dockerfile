@@ -1,6 +1,5 @@
 FROM ubuntu:16.04 as sphinx
 
-ADD crontab /etc/cron.d/sphinx_cron
 
 RUN apt-get update && \
     apt-get -y install wget gcc g++ make libpq-dev libpqxx-dev postgresql && \
@@ -16,7 +15,6 @@ RUN apt-get update && \
     wget https://github.com/sphinxsearch/sphinx/archive/2.3.2-beta.tar.gz && \
     tar xzvf /2.3.2-beta.tar.gz && \
     rm /2.3.2-beta.tar.gz && \
-    chmod 0644 /etc/cron.d/sphinx_cron && \
     touch /var/log/cron.log
 
 WORKDIR /sphinx-2.3.2-beta
@@ -32,10 +30,15 @@ RUN apt-get -y remove g++ gcc wget make
 
 FROM sphinx
 
+# TODO: setup for delta and main index using volumes
+# ADD crontab /etc/cron.d/sphinx_cron
+
+# RUN chmod 0644 /etc/cron.d/sphinx_cron
+
 COPY sphinx.conf /etc/sphinxsearch/sphinx.conf
 
 VOLUME ["/etc/sphinxsearch"]
 
-EXPOSE 9306 9307
+EXPOSE 9306
 
-CMD sh -c "indexer -c /etc/sphinxsearch/sphinx.conf --all && searchd -c /etc/sphinxsearch/sphinx.conf --nodetach"
+CMD sh -c "cron && searchd -c /etc/sphinxsearch/sphinx.conf --nodetach"
