@@ -21,4 +21,5 @@ class SearchErrorMiddleware(ServerErrorMiddleware):
                     )
                 )
                 sentry_sdk.capture_exception(exc)
+
             raise exc from None

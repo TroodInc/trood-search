@@ -17,6 +17,7 @@ Contents
     settings
     rest-api
     querying
+    snippets
 
 Versioning
 ----------

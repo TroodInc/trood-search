@@ -1,15 +1,14 @@
-import logging
 import json
+import logging
 
 from fastapi import Depends
 from fastapi.routing import APIRouter
 from starlette import status
-from starlette.responses import JSONResponse
 from starlette.requests import Request
-
-from .engines.sphinx import Engine
+from starlette.responses import JSONResponse
 
 from .aio_trood_sdk.auth_http import trood_auth
+from .engines.sphinx import Engine
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +27,7 @@ async def health_check():
 
 @router.get("/search/", tags=["search"])
 async def search(
+    request: Request,
     index: str = "",
     select: str = "*",
     match: str = "",
@@ -35,7 +35,7 @@ async def search(
     token: str = Depends(token_parameter),
 ):
     """ Full-text search endpoint. """
-    engine = Engine(index)
+    engine = Engine(index, request.app)
     results = await engine.search(select, match, limit)
     if len(results) == 1:
         results = results[0]
@@ -87,7 +87,7 @@ async def index(request: Request, token: str = Depends(token_parameter)):
     if errors:
         return JSONResponse(errors, status_code=400)
 
-    engine = Engine(f"rt_{event['object']}_index")
+    engine = Engine(f"rt_{event['object']}_index", request.app)
     result = None
     if event["action"] == "create":
         result = await engine.create(event["current"])
@@ -97,3 +97,46 @@ async def index(request: Request, token: str = Depends(token_parameter)):
         result = await engine.delete(event["previous"])
 
     return result
+
+
+@router.get(
+    "/snippets/",
+    tags=["snippets"],
+    responses={403: {"description": "Not authenticated"}},
+)
+async def snippet_list(
+    request: Request, token: str = Depends(token_parameter)
+):
+    """ Registered snippets endpoint. """
+    return request.app.snippets
+
+
+@router.post(
+    "/snippets/",
+    tags=["snippets"],
+    responses={403: {"description": "Not authenticated"}},
+)
+async def snippet_register(
+    request: Request, token: str = Depends(token_parameter)
+):
+    """ Register/update snippet endpoint. """
+    try:
+        snippet = await request.json()
+    except json.decoder.JSONDecodeError:
+        return JSONResponse({"error": "Unvalid JSON."}, status_code=400)
+
+    request.app.snippets.update(snippet)
+    return request.app.snippets
+
+
+@router.delete(
+    "/snippets/{index_name}/",
+    tags=["snippets"],
+    responses={403: {"description": "Not authenticated"}},
+)
+async def snippet_delete(
+    request: Request, index_name: str, token: str = Depends(token_parameter)
+):
+    """ Delete registered snippet endpoint. """
+    request.app.snippets.pop(index_name, None)
+    return JSONResponse(status_code=204)
