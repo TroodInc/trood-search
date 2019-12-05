@@ -1,0 +1,95 @@
+version: "3"
+
+services:
+
+  search:
+    image: registry.tools.trood.ru/search:${TAG_NAME:-dev}
+    build:
+      context: ./search
+      dockerfile: Dockerfile
+    container_name: search
+    restart: always
+    environment:
+      AUTH_URL: "http://auth:8000"
+      AUTH_DOMAIN: "SEARCH"
+      AUTH_SECRET: "b1b4a229c0cb5865f67f0626dc9c184526dc6dd99f8f505b14d1c95739d523dfcfaa17534ea160364fe27e10e6c331a1c231f60be581e69fed4f5bf9c4dfdadb"
+      WHITE_URLS: "/index/,/search/"
+      SPHINX_DB: "mysql://sphinxsearch:9306/"
+      SENTRY_ENABLED: "True"
+      SENTRY_DSN: "https://e596af21d20d4fca8867a727b0003b47:d9ae422ff66e42138fba31a64f1414eb@sentry.tools.trood.ru/7"
+    volumes:
+      - ./search:/app
+    networks:
+      - search_net
+    ports:
+      - "8000:8000"
+  
+  sphinxsearch:
+    image: registry.tools.trood.ru/sphinxsearch:${TAG_NAME:-dev}
+    build:
+      context: ./sphinxsearch
+      dockerfile: Dockerfile
+    container_name: sphinxsearch
+    restart: always
+    depends_on:
+      - postgres
+    volumes:
+      - ./sphinxsearch/sphinx.conf:/etc/sphinxsearch/sphinx.conf
+      - ./sphinxsearch/data:/var/lib/sphinxsearch/data
+    networks:
+      - search_net
+    ports:
+      - "9306:9306"
+  
+  custodian:
+    image: registry.tools.trood.ru/custodian:dev
+    container_name: custodian
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: "pgsql://postgres:postgres@postgres/custodian?sslmode=disable"
+    volumes:
+      - ./custodian/migrations:/home/migrations
+      - ./custodian/migrate.py:/usr/bin/migrate.py
+      - ./custodian/loaddata.py:/usr/bin/loaddata.py
+      - ./custodian/utils.py:/usr/bin/utils.py
+    networks:
+      - search_net
+    ports:
+      - "8080:8000"
+
+  postgres:
+    image: postgres:10.5
+    container_name: postgres
+    restart: always
+    environment:
+      LC_ALL: C.UTF-8
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - search_net
+  
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@trood.com
+      PGADMIN_DEFAULT_PASSWORD: tcp.trood.com
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/servers.json
+    ports:
+      - "5455:80"
+    networks:
+      - search_net
+
+networks:
+  search_net:
+    driver: bridge

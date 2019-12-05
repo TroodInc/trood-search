@@ -1,0 +1,45 @@
+{
+    "id": "1dfa9d27",
+    "applyTo": "",
+    "dependsOn": ["536ab4d9"],
+    "operations": [
+        {
+            "type": "createObject",
+            "object": {
+                "name": "log",
+                "key": "id",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": "number",
+                        "optional": true,
+                        "default": {
+                            "func": "nextval"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "type": "datetime",
+                        "optional": true,
+                        "default": {
+                            "func": "now"
+                        }
+                    },
+                    {
+                        "name": "is_main",
+                        "type": "bool",
+                        "optional": true,
+                        "default": false
+                    },
+                    {
+                        "name": "is_rt",
+                        "type": "bool",
+                        "optional": true,
+                        "default": false
+                    }
+                ],
+                "cas": false
+            }
+        }
+    ]
+}

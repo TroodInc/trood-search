@@ -11,7 +11,8 @@ class SearchErrorMiddleware(ServerErrorMiddleware):
         try:
             return await super().__call__(scope, receive, send)
         except Exception as exc:
-            if os.environ.get("SENTRY_ENABLED", True):
+
+            if os.environ.get("SENTRY_ENABLED", False):
                 import sentry_sdk
 
                 sentry_sdk.init(

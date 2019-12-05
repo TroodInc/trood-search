@@ -10,39 +10,34 @@ logger = logging.getLogger(__name__)
 
 
 class Engine(BaseEngine):
-    """ Sphinx search engine interface. """
+    """
+    Sphinx search engine interface.
 
-    def __init__(self, index, app):
+    Events must be valid for custodian event schema
+
+    Index naming rule
+    rt_ + event.object + _index
+    """
+
+    def __init__(self, app, events=None):
+        self.events = events
         self.app = app
         self.database = database
-        self.indexes = index.split(",")
         self.meta_query = "SHOW META"
 
-    async def search(self, select, match, limit):
+    async def process_events(self):
+        # TODO: Batch processing
+        for event in self.events:
+            index = f"rt_{event['object']}_index"
+            if event["action"] == "create":
+                await self.create(index, event["current"])
+            elif event["action"] == "update":
+                await self.update(index, event["current"])
+            elif event["action"] == "remove":
+                await self.delete(index, event["previous"])
+
+    async def search(self, index, select, match, limit):
         """ Search data in index by given parameters. """
-        indexes = (
-            self._search_index(i, select, match, limit)
-            for i in self.indexes[:]
-        )
-        results = await asyncio.gather(*indexes)
-        return results
-
-    async def create(self, query):
-        """ Create a new record in the index. """
-        query = self._generate_touch_query("INSERT", query)
-        return await database.execute(query=query)
-
-    async def update(self, query):
-        """ Update the exists record in the index. """
-        query = self._generate_touch_query("REPLACE", query)
-        return await database.execute(query=query)
-
-    async def delete(self, query):
-        """ Delete the exists record in the index. """
-        query = f"DELETE FROM {self.indexes[0]} WHERE id={query['id']}"
-        return await database.execute(query=query)
-
-    async def _search_index(self, index, select, match, limit):
         snippet = self.app.snippets.get(index, "")
         if snippet != "":
             snippet = snippet.format(match=match)
@@ -54,6 +49,21 @@ class Engine(BaseEngine):
         attrs, matches = await self._split_on_attrs_and_matches(results)
         result = {"meta": meta, "attrs": attrs, "matches": matches}
         return result
+
+    async def create(self, index, query):
+        """ Create a new record in the index. """
+        query = self._generate_touch_query(index, "INSERT", query)
+        return await database.execute(query=query)
+
+    async def update(self, index, query):
+        """ Update the exists record in the index. """
+        query = self._generate_touch_query(index, "REPLACE", query)
+        return await database.execute(query=query)
+
+    async def delete(self, index, query):
+        """ Delete the exists record in the index. """
+        query = f"DELETE FROM {index} WHERE id={query['id']}"
+        return await database.execute(query=query)
 
     async def _split_on_attrs_and_matches(self, results):
         attrs = []
@@ -70,7 +80,7 @@ class Engine(BaseEngine):
 
         return attrs, matches
 
-    def _generate_touch_query(self, name, query):
+    def _generate_touch_query(self, index, name, query):
         """ Generate INSERT, REPLACE query. """
         assert name in {"INSERT", "REPLACE"}
         columns = []
@@ -84,4 +94,4 @@ class Engine(BaseEngine):
 
         columns = ",".join(columns)
         values = ",".join(values)
-        return f"{name} INTO {self.indexes[0]} ({columns}) VALUES ({values})"
+        return f"{name} INTO {index} ({columns}) VALUES ({values})"

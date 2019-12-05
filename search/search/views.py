@@ -35,11 +35,8 @@ async def search(
     token: str = Depends(token_parameter),
 ):
     """ Full-text search endpoint. """
-    engine = Engine(index, request.app)
-    results = await engine.search(select, match, limit)
-    if len(results) == 1:
-        results = results[0]
-
+    engine = Engine(request.app)
+    results = await engine.search(index, select, match, limit)
     return results
 
 
@@ -51,52 +48,18 @@ async def search(
 async def index(request: Request, token: str = Depends(token_parameter)):
     """
     RT index actions endpoint.
-
-    Event must be valid for custodian event schema
-    Index naming rule
-    rt_ + event.object + _index
-
-    TODO: Implement batch/many/bulk operation
-    TODO: Validation refactoring
     """
+    try:
+        events = await request.json()
+    except json.decoder.JSONDecodeError:
+        return JSONResponse(
+            {"status": "Error", "data": "Invalid JSON"}, status_code=400
+        )
 
-    async def is_valid():
-        errors = []
-        try:
-            event = await request.json()
-        except json.decoder.JSONDecodeError:
-            event = {}
-
-        if "action" not in event:
-            errors.append({"action": "is required"})
-        elif event["action"] not in ("create", "update", "delete"):
-            errors.append({"action": "must be one of create, update, delete"})
-
-        if "object" not in event:
-            errors.append({"object": "is required"})
-
-        if "current" not in event:
-            errors.append({"current": "is required"})
-
-        if "previous" not in event:
-            errors.append({"previous": "is required"})
-
-        return event, errors
-
-    event, errors = await is_valid()
-    if errors:
-        return JSONResponse(errors, status_code=400)
-
-    engine = Engine(f"rt_{event['object']}_index", request.app)
-    result = None
-    if event["action"] == "create":
-        result = await engine.create(event["current"])
-    elif event["action"] == "update":
-        result = await engine.update(event["current"])
-    elif event["action"] == "delete":
-        result = await engine.delete(event["previous"])
-
-    return result
+    # TODO: Validation
+    engine = Engine(request.app, events['events'])
+    await engine.process_events()
+    return {"status": "Ok"}
 
 
 @router.get(
