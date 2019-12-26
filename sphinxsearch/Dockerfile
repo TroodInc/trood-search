@@ -2,7 +2,7 @@ FROM ubuntu:16.04 as sphinx
 
 
 RUN apt-get update && \
-    apt-get -y install wget gcc g++ make libpq-dev libpqxx-dev postgresql libmysql++ && \
+    apt-get -y install wget gcc g++ make libpq-dev libpqxx-dev postgresql libmysql++ mysql-client && \
     apt-get -y install cron && \
     mkdir -p /var/log/sphinxsearch && \
     mkdir -p /var/run/sphinxsearch && \
