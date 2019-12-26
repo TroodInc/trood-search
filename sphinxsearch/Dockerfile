@@ -19,7 +19,7 @@ RUN apt-get update && \
 
 WORKDIR /sphinx-2.3.2-beta
 
-RUN ./configure --without-mysql \
+RUN ./configure \
     --with-pgsql=/usr/lib/postgresql/9.5/lib \
     --with-pgsql-includes=/usr/include/postgresql \
     --with-pgsql-libs && \
