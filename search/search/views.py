@@ -30,7 +30,7 @@ async def search(
     request: Request,
     index: str = "",
     select: str = "*",
-    match: str = "",
+    match: str = "''",
     limit: str = "0,10",
     token: str = Depends(token_parameter),
 ):
