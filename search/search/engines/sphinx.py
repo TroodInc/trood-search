@@ -43,6 +43,7 @@ class Engine(BaseEngine):
             snippet = snippet.format(match=match)
 
         query = f"select {select}{snippet} from {index} where match('{match}') limit {limit}"
+        logger.debug(query)
         results = await self.database.fetch_all(query=query)
         meta = await self.database.fetch_all(query=self.meta_query)
         meta = dict(meta)
