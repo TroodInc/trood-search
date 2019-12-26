@@ -41,6 +41,8 @@ class Engine(BaseEngine):
         snippet = self.app.snippets.get(index, "")
         if snippet != "":
             snippet = snippet.format(match=match)
+        if match != "''":
+            match = f"'{match}'"
 
         query = f"select {select}{snippet} from {index} where match({match}) limit {limit}"
         logger.info(query)
