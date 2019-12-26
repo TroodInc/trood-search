@@ -9,8 +9,8 @@ build:
 run:
 	@docker-compose -f docker-compose.test.yml up -d
 	@make wait-database
-	@make init-custodian
 	@make init-sphinx
+	@make init-custodian
 	@make ps
 
 wait-database:
@@ -27,6 +27,10 @@ init-custodian:
 init-sphinx:
 	@echo Init sphinx search index
 	@docker-compose -f docker-compose.test.yml exec -T sphinxsearch sh -c 'rm -rf /var/lib/sphinxsearch/data/*'
+
+test:
+	@echo Testing ...
+	@docker-compose -f docker-compose.test.yml exec -T search sh -c 'pipenv run pytest -x'
 
 ps:
 	@docker-compose -f docker-compose.test.yml ps

@@ -2,7 +2,7 @@ FROM ubuntu:16.04 as sphinx
 
 
 RUN apt-get update && \
-    apt-get -y install wget gcc g++ make libpq-dev libpqxx-dev postgresql && \
+    apt-get -y install wget gcc g++ make libpq-dev libpqxx-dev postgresql libmysql++ && \
     apt-get -y install cron && \
     mkdir -p /var/log/sphinxsearch && \
     mkdir -p /var/run/sphinxsearch && \
@@ -20,6 +20,7 @@ RUN apt-get update && \
 WORKDIR /sphinx-2.3.2-beta
 
 RUN ./configure \
+    --with-mysql \
     --with-pgsql=/usr/lib/postgresql/9.5/lib \
     --with-pgsql-includes=/usr/include/postgresql \
     --with-pgsql-libs && \
