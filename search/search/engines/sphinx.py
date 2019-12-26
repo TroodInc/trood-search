@@ -42,7 +42,7 @@ class Engine(BaseEngine):
         if snippet != "":
             snippet = snippet.format(match=match)
 
-        query = f"select {select}{snippet} from {index} where match('{match}') limit {limit}"
+        query = f"select {select}{snippet} from {index} where match({match}) limit {limit}"
         logger.info(query)
         results = await self.database.fetch_all(query=query)
         meta = await self.database.fetch_all(query=self.meta_query)
