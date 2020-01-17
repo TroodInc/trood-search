@@ -20,23 +20,24 @@ async def token_parameter(token: str = Depends(trood_auth)):
     return token
 
 
-@router.get("/", tags=["health check"])
+@router.get("/ping/", tags=["health check"])
 async def health_check():
     return {"status": "OK"}
 
 
-@router.get("/search/", tags=["search"])
+@router.get("/", tags=["search"])
 async def search(
     request: Request,
     index: str = "",
     select: str = "*",
-    match: str = "''",
+    filter: str = "",
+    match: str = "*",
     limit: str = "0,10",
     token: str = Depends(token_parameter),
 ):
     """ Full-text search endpoint. """
     engine = Engine(request.app)
-    results = await engine.search(index, select, match, limit)
+    results = await engine.search(index, select, filter, match, limit)
     return results
 
 
@@ -57,7 +58,7 @@ async def index(request: Request, token: str = Depends(token_parameter)):
         )
 
     # TODO: Validation
-    engine = Engine(request.app, events['events'])
+    engine = Engine(request.app, events["events"])
     await engine.process_events()
     return {"status": "Ok"}
 

@@ -4,6 +4,7 @@ import logging
 from aiohttp import ClientSession
 
 from ..database import database
+from ..parsers import RQL2SQLParser, RQL2SphinxQLParser
 from . import BaseEngine
 
 logger = logging.getLogger(__name__)
@@ -36,15 +37,23 @@ class Engine(BaseEngine):
             elif event["action"] == "remove":
                 await self.delete(index, event["previous"])
 
-    async def search(self, index, select, match, limit):
+    async def search(self, index, select, search_filter, match, limit):
         """ Search data in index by given parameters. """
         snippet = self.app.snippets.get(index, "")
+        search_expression = ""
+        if search_filter != "":
+            parser = RQL2SQLParser(search_filter)
+            search_filter = f", {parser.make_query()} as search_filter"
+            search_expression = " AND search_filter 1"
+
+        if match != "*":
+            parser = RQL2SphinxQLParser(match)
+            match = parser.make_query()
+
         if snippet != "":
             snippet = snippet.format(match=match)
-        if match != "''":
-            match = f"'{match}'"
 
-        query = f"select {select}{snippet} from {index} where match({match}) limit {limit}"
+        query = f"select {select}{snippet}{search_filter} from {index} where match('{match}'){search_expression} limit {limit}"
         logger.info(query)
         results = await self.database.fetch_all(query=query)
         meta = await self.database.fetch_all(query=self.meta_query)
