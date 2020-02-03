@@ -13,9 +13,9 @@ services:
       AUTH_URL: "http://auth:8000"
       AUTH_DOMAIN: "SEARCH"
       AUTH_SECRET: "b1b4a229c0cb5865f67f0626dc9c184526dc6dd99f8f505b14d1c95739d523dfcfaa17534ea160364fe27e10e6c331a1c231f60be581e69fed4f5bf9c4dfdadb"
-      WHITE_URLS: "/index/,/search/"
+      WHITE_URLS: "/index/,/"
       SPHINX_DB: "mysql://sphinxsearch:9306/"
-      SENTRY_ENABLED: "True"
+      SENTRY_ENABLED: "False"
       SENTRY_DSN: "https://e596af21d20d4fca8867a727b0003b47:d9ae422ff66e42138fba31a64f1414eb@sentry.tools.trood.ru/7"
     volumes:
       - ./search:/app
@@ -23,6 +23,18 @@ services:
       - search_net
     ports:
       - "8000:8000"
+  
+  # autotest:
+  #   image: registry.tools.trood.ru/search:${TAG_NAME:-dev}
+  #   container_name: search.autotests
+  #   environment:
+  #     CUSTODIAN_URL: "http://custodian:8000/custodian/data/tbl/"
+  #     SEARCH_URL: "http://search:8000/search/?index={index}&match={match}"
+  #     WHITE_URLS: "/index/,/"
+  #     SPHINX_DB: "mysql://sphinxsearch:9306/"
+  #   command: sh -c 'rm -rf /var/lib/sphinxsearch/data/*' && pipenv run pytest -x
+  #   networks:
+  #     - search_net
   
   sphinxsearch:
     image: registry.tools.trood.ru/sphinxsearch:${TAG_NAME:-dev}

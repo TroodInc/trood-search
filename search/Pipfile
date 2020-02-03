@@ -15,6 +15,7 @@ Sphinx = "*"
 sphinxcontrib-openapi = "*"
 aiohttp = "*"
 pytest-asyncio = "*"
+pyparsing = "*"
 
 [dev-packages]
 black = "*"
