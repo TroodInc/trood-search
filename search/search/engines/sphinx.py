@@ -4,7 +4,7 @@ import logging
 from aiohttp import ClientSession
 
 from ..database import database
-from ..parsers import RQL2SQLParser, RQL2SphinxQLParser
+from ..parsers import RQL2SQLParser, RQL2SphinxQLParser, Converter
 from . import BaseEngine
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class Engine(BaseEngine):
         if search_filter != "":
             parser = RQL2SQLParser(search_filter)
             search_filter = f", {parser.make_query()} as search_filter"
-            search_expression = " AND search_filter 1"
+            search_expression = " AND search_filter=1"
 
         if match != "*":
             parser = RQL2SphinxQLParser(match)
@@ -57,7 +57,7 @@ class Engine(BaseEngine):
         logger.info(query)
         results = await self.database.fetch_all(query=query)
         meta = await self.database.fetch_all(query=self.meta_query)
-        meta = dict(meta)
+        meta = dict((k, Converter.convert_string(v, False)) for k, v in meta)
         attrs, matches = await self._split_on_attrs_and_matches(results)
         result = {"meta": meta, "attrs": attrs, "matches": matches}
         return result

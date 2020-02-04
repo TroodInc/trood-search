@@ -99,6 +99,11 @@ class BaseParser(ABC):
 
 
 class RQL2SQLParser(BaseParser):
+    def __init__(self, rql_string):
+        self.EQ.setParseAction(lambda: "=")
+        self.NE.setParseAction(lambda: "<>")
+        super().__init__(rql_string)
+
     def get_condition(self, fn):
         operator = fn[0].lower()
         if operator in (self.AND, self.OR):
@@ -127,7 +132,7 @@ class RQL2SphinxQLParser(BaseParser):
             condition = self.get_boolean(operator, fn[1:])
         else:
             value = Converter.convert(fn[2], add_quote=False)
-            condition = f"@{fn[1]}{operator}{value}"
+            condition = f"(@{fn[1]}{operator}{value})"
 
         return condition
 
