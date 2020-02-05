@@ -58,7 +58,8 @@ class BaseParser(ABC):
 
     NAME = Word(alphas + "_.", alphanums + "_.")
     _QUOTE = Literal('"').suppress()
-    _WORD = Word(alphanums + "_.")
+    _cyrillicalphas = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+    _WORD = Word(alphanums + " " + _cyrillicalphas + _cyrillicalphas.upper())
     _VALUE = _QUOTE + _WORD + _QUOTE
     VALUE = _WORD | _VALUE
 
