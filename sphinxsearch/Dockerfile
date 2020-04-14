@@ -34,10 +34,10 @@ FROM sphinx
 # TODO: setup for delta and main index using volumes
 # ADD crontab /etc/cron.d/sphinx_cron
 
-# RUN chmod 0644 /etc/cron.d/sphinx_cron
 
 COPY sphinx.conf /etc/sphinxsearch/sphinx.conf
 COPY run.simple.sh /etc/sphinxsearch/run.simple.sh
+RUN chmod +x /etc/sphinxsearch/run.simple.sh
 
 VOLUME ["/etc/sphinxsearch"]
 
