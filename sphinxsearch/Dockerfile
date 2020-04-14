@@ -37,9 +37,10 @@ FROM sphinx
 # RUN chmod 0644 /etc/cron.d/sphinx_cron
 
 COPY sphinx.conf /etc/sphinxsearch/sphinx.conf
+COPY run.simple.sh /etc/sphinxsearch/run.simple.sh
 
 VOLUME ["/etc/sphinxsearch"]
 
 EXPOSE 9306
 
-CMD sh -c "cron && searchd -c /etc/sphinxsearch/sphinx.conf --nodetach"
+CMD "/etc/sphinxsearch/run.simple.sh"
