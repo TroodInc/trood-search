@@ -12,6 +12,6 @@ cron
 
 rm /var/lib/sphinxsearch/data/*
 
-indexer -c /etc/sphinxsearch/sphinx.simple.conf --all
+indexer -c /etc/sphinxsearch/sphinx.conf --all
 
-searchd -c /etc/sphinxsearch/sphinx.simple.conf --nodetach
+searchd -c /etc/sphinxsearch/sphinx.conf --nodetach

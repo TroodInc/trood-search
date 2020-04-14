@@ -36,11 +36,11 @@ FROM sphinx
 
 
 COPY sphinx.conf /etc/sphinxsearch/sphinx.conf
-COPY run.simple.sh /etc/sphinxsearch/run.simple.sh
-RUN chmod +x /etc/sphinxsearch/run.simple.sh
+COPY run.simple.sh /bin/run.simple.sh
+RUN chmod +x /bin/run.simple.sh
 
 VOLUME ["/etc/sphinxsearch"]
 
 EXPOSE 9306
 
-CMD "/etc/sphinxsearch/run.simple.sh"
+CMD "/bin/run.simple.sh"
