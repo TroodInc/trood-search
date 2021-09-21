@@ -1,5 +1,6 @@
 FROM ubuntu:16.04 as sphinx
 
+ADD crontab /etc/cron.d/sphinx_cron
 
 RUN apt-get update && \
     apt-get -y install wget gcc g++ make libpq-dev libpqxx-dev postgresql libmysql++ mysql-client && \
@@ -31,16 +32,10 @@ RUN apt-get -y remove g++ gcc wget make
 
 FROM sphinx
 
-# TODO: setup for delta and main index using volumes
-# ADD crontab /etc/cron.d/sphinx_cron
-
-
 COPY sphinx.conf /etc/sphinxsearch/sphinx.conf
-COPY run.simple.sh /bin/run.simple.sh
-RUN chmod +x /bin/run.simple.sh
 
 VOLUME ["/etc/sphinxsearch"]
 
 EXPOSE 9306
 
-CMD "/bin/run.simple.sh"
+CMD sh -c "indexer -c /etc/sphinxsearch/sphinx.conf --all && searchd -c /etc/sphinxsearch/sphinx.conf --nodetach"
