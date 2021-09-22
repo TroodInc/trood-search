@@ -1,0 +1,79 @@
+{
+    "id": "536ab4d9",
+    "applyTo": "",
+    "dependsOn": [],
+    "operations": [
+        {
+            "type": "createObject",
+            "object": {
+                "name": "tbl",
+                "key": "id",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": "number",
+                        "optional": true,
+                        "default": {
+                            "func": "nextval"
+                        }
+                    },
+                    {
+                        "name": "text",
+                        "type": "string",
+                        "optional": false
+                    },
+                    {
+                        "name": "updated",
+                        "type": "datetime",
+                        "optional": true,
+                        "default": {
+                            "func": "now"
+                        }
+                    }
+                ],
+                "actions": [
+                    {
+                        "name": "29b58a9f",
+                        "protocol": "REST",
+                        "method": "create",
+                        "args": [
+                            "http://search:8000/index/"
+                        ],
+                        "activeIfNotRoot": true,
+                        "includeValues": {
+                            "id": "id",
+                            "text": "text"
+                        }
+                    },
+                    {
+                        "name": "29b58a9g",
+                        "protocol": "REST",
+                        "method": "update",
+                        "args": [
+                            "http://search:8000/index/"
+                        ],
+                        "activeIfNotRoot": true,
+                        "includeValues": {
+                            "id": "id",
+                            "text": "text"
+                        }
+                    },
+                    {
+                        "name": "29b58a9j",
+                        "protocol": "REST",
+                        "method": "remove",
+                        "args": [
+                            "http://search:8000/index/"
+                        ],
+                        "activeIfNotRoot": true,
+                        "includeValues": {
+                            "id": "id",
+                            "text": "text"
+                        }
+                    }
+                ],
+                "cas": false
+            }
+        }
+    ]
+}

@@ -4,14 +4,9 @@ Rest API
 Schema
 ------
 
-.. literalinclude:: ./_static/api_schema.json
-   :language: json
-
-Functions
----------
-
-.. automodule:: search.views
-    :members:
+.. openapi:: ./_static/api_schema.json
+   :group:
+   :examples:
 
 Notes
 -----
