@@ -3,14 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Search service
-==============
 
-Give fulltext search interface to user.
+Full-text search service
+========================
+
+Give full-text search interface to user.
 
 Contents
 --------
 
 .. toctree::
     get-started
+    settings
     rest-api
+    querying
+    snippets
+
+Versioning
+----------
+
+Use `Semantic Versioning <https://semver.org/>`_

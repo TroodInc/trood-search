@@ -1,79 +1,109 @@
 import asyncio
-import uuid
-import json
 import logging
 
-from aiohttp import ClientSession, web
-from aiohttp.client_exceptions import ClientResponseError
+from aiohttp import ClientSession
 
+from ..database import database
+from ..parsers import RQL2SQLParser, RQL2SphinxQLParser, Converter
+from . import BaseEngine
 
 logger = logging.getLogger(__name__)
 
 
-async def search(request):
-    """  """
-    settings = request.app['settings']
-    search_data = get_search_data(request.query, settings)
-    collect_data = await get_collect_data(search_data, settings)
-    return collect_data
+class Engine(BaseEngine):
+    """
+    Sphinx search engine interface.
 
+    Events must be valid for custodian event schema
 
-def get_search_data(query, settings):
-    indexes = query.getall('index', [])
-    if not indexes:
-        indexes = settings.SEARCH_INDEXES.split(',')
+    Index naming rule
+    rt_ + event.object + _index
+    """
 
-    match = query.get('match', None)
-    if match is None:
-        match = ''
-    
-    select = query.get('select', None)
-    if select is None:
-        select = '*'
-    
-    limit = query.get('limit', None)
-    if limit is None:
-        limit = '0,10'
-    
-    data = {
-        'indexes': indexes,
-        'match': match,
-        'select': select,
-        'limit': limit
-    }
-    return data
+    def __init__(self, app, events=None):
+        self.events = events
+        self.app = app
+        self.database = database
+        self.meta_query = "SHOW META"
 
+    async def process_events(self):
+        # TODO: Batch processing
+        for event in self.events:
+            index = f"rt_{event['object']}_index"
+            if event["action"] == "create":
+                await self.create(index, event["current"])
+            elif event["action"] == "update":
+                await self.update(index, event["current"])
+            elif event["action"] == "remove":
+                await self.delete(index, event["previous"])
 
-async def get_collect_data(search_data, settings):
-    host = settings.SPHINX_URL
-    results = await asyncio.gather(
-        *[sphinx(i, host, search_data) for i in search_data['indexes'][:]]
-    )
-    return results
+    async def search(self, index, select, search_filter, match, limit):
+        """ Search data in index by given parameters. """
+        snippet = self.app.snippets.get(index, "")
+        search_expression = ""
+        if search_filter != "":
+            parser = RQL2SQLParser(search_filter)
+            search_filter = f", {parser.make_query()} as search_filter"
+            search_expression = " AND search_filter=1"
 
+        if match != "*":
+            parser = RQL2SphinxQLParser(match)
+            match = parser.make_query()
 
-async def sphinx(index, host, data):
-    data['index'] = index
-    return await sphinxsearch(host, data)
+        if snippet != "":
+            snippet = snippet.format(match=match)
 
+        query = f"select {select}{snippet}{search_filter} from {index} where match('{match}'){search_expression} limit {limit}"
+        logger.info(query)
+        results = await self.database.fetch_all(query=query)
+        meta = await self.database.fetch_all(query=self.meta_query)
+        meta = dict((k, Converter.convert_string(v, False)) for k, v in meta)
+        attrs, matches = await self._split_on_attrs_and_matches(results)
+        result = {"meta": meta, "attrs": attrs, "matches": matches}
+        return result
 
-async def sphinxsearch(host, query):
-    # url = f'{host}search/'
-    # data = '&'.join(f'{k}={v}' for k,v in query.items())
-    url = f'{host}sql/'
-    data = f'query={make_sql(query)}'
-    async with ClientSession() as session:
-        response = await session.post(url, data=data)
-        if response.status == 200:
-            results = await response.json()
-        else:
-            response = await response.text()
-            logger.warn(response)
-            results = {'searchengine': 'error'}
+    async def create(self, index, query):
+        """ Create a new record in the index. """
+        query = self._generate_touch_query(index, "INSERT", query)
+        return await database.execute(query=query)
 
-    return results
+    async def update(self, index, query):
+        """ Update the exists record in the index. """
+        query = self._generate_touch_query(index, "REPLACE", query)
+        return await database.execute(query=query)
 
+    async def delete(self, index, query):
+        """ Delete the exists record in the index. """
+        query = f"DELETE FROM {index} WHERE id={query['id']}"
+        return await database.execute(query=query)
 
-def make_sql(query):
-    sql = f'select {query["select"]} from {query["index"]} where match(\'{query["match"]}\') limit {query["limit"]}'
-    return sql
+    async def _split_on_attrs_and_matches(self, results):
+        attrs = []
+        matches = []
+        for i, result in enumerate(results):
+            if i == 0:
+                attrs = result.keys()
+
+            match = []
+            for key in attrs[:]:
+                match.append(result[key])
+
+            matches.append(match)
+
+        return attrs, matches
+
+    def _generate_touch_query(self, index, name, query):
+        """ Generate INSERT, REPLACE query. """
+        assert name in {"INSERT", "REPLACE"}
+        columns = []
+        values = []
+        for key, value in query.items():
+            columns.append(str(key))
+            if isinstance(value, str):
+                value = f"'{value}'"
+
+            values.append(str(value))
+
+        columns = ",".join(columns)
+        values = ",".join(values)
+        return f"{name} INTO {index} ({columns}) VALUES ({values})"

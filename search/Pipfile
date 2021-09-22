@@ -4,16 +4,21 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiohttp = "*"
 envparse = "*"
 pytest = "*"
-pytest-aiohttp = "*"
-uvloop = "*"
-sentry-sdk = "==0.7.9"
+sentry-sdk = "*"
+fastapi = "*"
+uvicorn = "*"
+pydantic = "*"
+databases = {extras = ["mysql"],version = "*"}
 Sphinx = "*"
-aiohttp-swagger = "*"
+sphinxcontrib-openapi = "*"
+aiohttp = "*"
+pytest-asyncio = "*"
+pyparsing = "*"
 
 [dev-packages]
+black = "*"
 isort = "*"
 pylint = "*"
 "flake8" = "*"

@@ -1,59 +1,77 @@
-import os
-import uuid
-import json
+import base64
 import hashlib
 import hmac
-import base64
+import json
+import logging
+import os
+import uuid
+from typing import Optional
+from urllib.parse import urlparse
 
 from aiohttp import ClientSession, web
 from aiohttp.client_exceptions import ClientResponseError
+from fastapi import HTTPException
+from fastapi.openapi.models import APIKey, APIKeyIn
+from fastapi.security import APIKeyHeader
+from starlette.requests import Request
 
 
 def get_service_token(domain, secret):
-    key = hashlib.sha1(b'trood.signer' + secret.encode('utf-8')).digest()
-    signature = hmac.new(key, msg=domain.encode('utf-8'), digestmod=hashlib.sha1).digest()
-    signature = base64.urlsafe_b64encode(signature).strip(b'=')
+    key = hashlib.sha1(b"trood.signer" + secret.encode("utf-8")).digest()
+    signature = hmac.new(
+        key, msg=domain.encode("utf-8"), digestmod=hashlib.sha1
+    ).digest()
+    signature = base64.urlsafe_b64encode(signature).strip(b"=")
     return f'Service {domain}:{signature.decode("utf-8")}'
 
 
-async def check_token(request, token):
-    settings = request.app['settings']
+async def check_token(token):
+    if not token:
+        return None
 
-    url = f'{settings.AUTH_URL}/api/v1.0/verify-token'
+    url = f"{os.environ.get('AUTH_URL', 'http://auth:8000')}/api/v1.0/verify-token"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": get_service_token(settings.AUTH_DOMAIN, settings.AUTH_SECRET)
+        "Authorization": get_service_token(
+            os.environ.get("AUTH_DOMAIN", "SEARCH"),
+            os.environ.get("AUTH_SECRET", "AUTH_SECRET",),
+        ),
     }
 
     parts = token.split()
     token_type = "service" if parts[0] == "Service" else "user"
 
     user = None
-    token_data = {
-        "type": token_type,
-        "token": parts[1]
-    }
-    token_data = json.dumps(token_data) 
-    async with ClientSession() as session:
-        async with session.post(url, data=token_data, headers=headers) as response:
-            if response.status == 200:
-                data = await response.json()
-                user = data['data']
+    async with ClientSession(headers=headers) as session:
+        response = await session.post(
+            url, json={"type": token_type, "token": parts[1]}
+        )
+        if response.status == 200:
+            data = await response.json()
+            user = data["data"]
 
     return user
 
 
-@web.middleware
-async def trood_auth(request, handler):
-    settings = request.app['settings']
-    is_white_url = request.path in settings.EXCEPT_URLS.split(',')
-    if is_white_url:
-        return await handler(request)
+class TrooAuthHeader(APIKeyHeader):
+    async def __call__(self, request: Request) -> Optional[str]:
+        white_urls = os.environ.get("WHITE_URLS", "").split(",")
+        parsed_url = urlparse(str(request.url))
+        if parsed_url.path in white_urls:
+            return True
 
-    user_token = request.headers.get('Authorization')
-    user = await check_token(request, user_token)
-    if user:
-        request['user'] = user
-        return await handler(request)
+        token: str = request.headers.get(self.model.name)
+        if not token:
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=403, detail="Not authenticated"
+                )
+            else:
+                return None
+        else:
+            user = await check_token(token)
 
-    return web.json_response({"error": "Authorization failed"}, status=403)
+        return user
+
+
+trood_auth = TrooAuthHeader(name="Authorization")
